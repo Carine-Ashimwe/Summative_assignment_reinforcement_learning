@@ -37,28 +37,13 @@ class MaternalChildHealthMissionEnv(gym.Env):
     6 -> remote_telemedicine_consultation
     7 -> hold_and_monitor (do nothing)
 
-    Observation space (default Box(12,)):
+    Observation space (Box(6,)):
     [0] maternal_risk_index        in [0,1]
     [1] neonatal_risk_index        in [0,1]
-    [2] immunization_gap           in [0,1]
-    [3] nutrition_deficit          in [0,1]
-    [4] referral_backlog           in [0,1]
-    [5] medical_supply_stress      in [0,1]
-    [6] community_trust            in [0,1]
-    [7] weather_severity           in [0,1]
-    [8] staff_fatigue              in [0,1]
-    [9] budget_remaining_norm      in [0,1]
-    [10] day_progress              in [0,1]
-    [11] recent_shock_flag         in [0,1]
-
-    Focused maternal-neonatal mode (config.focused_mnh_mode=True):
-    Observation space is Box(6,) with only core mission indicators:
-    [0] maternal_risk_index
-    [1] neonatal_risk_index
-    [2] referral_backlog
-    [3] medical_supply_stress
-    [4] community_trust
-    [5] budget_remaining_norm
+    [2] referral_backlog           in [0,1]
+    [3] medical_supply_stress      in [0,1]
+    [4] community_trust            in [0,1]
+    [5] budget_remaining_norm      in [0,1]
     """
 
     metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 10}
@@ -88,19 +73,18 @@ class MaternalChildHealthMissionEnv(gym.Env):
         self.rng = np.random.default_rng(seed)
 
         self.action_space = spaces.Discrete(len(self.ACTIONS))
-        self.focused_mnh_mode = bool(self.config.focused_mnh_mode)
 
-        obs_dim = 6 if self.focused_mnh_mode else 12
+        # Core 6-feature observation space
         self.observation_space = spaces.Box(
-            low=np.zeros(obs_dim, dtype=np.float32),
-            high=np.ones(obs_dim, dtype=np.float32),
-            shape=(obs_dim,),
+            low=np.zeros(6, dtype=np.float32),
+            high=np.ones(6, dtype=np.float32),
+            shape=(6,),
             dtype=np.float32,
         )
 
         self.renderer: Optional[MaternalChildHealthRenderer] = None
         self.render_fps = int(self.metadata["render_fps"])
-        self.state = np.zeros(12, dtype=np.float32)
+        self.state = np.zeros(12, dtype=np.float32)  # Internal full state
         self.day = 0
         self.total_reward = 0.0
         self.preventable_adverse_events = 0
@@ -110,11 +94,7 @@ class MaternalChildHealthMissionEnv(gym.Env):
         self.reward_history: list[float] = []
 
     def _observe(self) -> np.ndarray:
-        if not self.focused_mnh_mode:
-            return self.state.copy()
-
-        # Focus only on core maternal/neonatal operations signals.
-        # Full state indices: maternal(0), neonatal(1), referral(4), supply(5), trust(6), budget(9)
+        # Return core 6-feature observation: maternal risk, neonatal risk, referral backlog, supply stress, community trust, budget remaining
         return self.state[[0, 1, 4, 5, 6, 9]].astype(np.float32)
 
     def set_render_fps(self, fps: int) -> None:
@@ -167,7 +147,6 @@ class MaternalChildHealthMissionEnv(gym.Env):
             "action_names": self.ACTIONS,
             "mission": "maternal_child_health",
             "budget": float(self.config.initial_budget),
-            "focused_mnh_mode": self.focused_mnh_mode,
         }
         return self._observe(), info
 

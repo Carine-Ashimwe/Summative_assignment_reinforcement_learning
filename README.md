@@ -224,7 +224,7 @@ project_root/
 
 ## File Roles
 
-- `environment/custom_env.py`: custom Gymnasium environment.
+- `environment/custom_env.py`: custom Gymnasium environment with 6 core observation features (maternal risk, neonatal risk, referral backlog, supply stress, community trust, budget remaining).
 - `environment/rendering.py`: visualization GUI components.
 - `training/dqn_training.py`: DQN training with Stable-Baselines3.
 - `training/pg_training.py`: policy-gradient training (PPO/A2C) with Stable-Baselines3.
