@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+.venv/
+venv/
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Build / cache
+.pytest_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+
+# Training runtime logs
+results/*.log
+results/*training*.log
+results/postprocess.log
+results/quick_postprocess.log
+
+# TensorBoard / transient outputs
+results/tb/
+
+# Keep curated outputs but ignore temporary dump files
+results/**/*.tmp
+
+# Optional local media captures
+video_demonstration.mp4
+*.mov
