@@ -37,13 +37,10 @@ class MaternalChildHealthMissionEnv(gym.Env):
     6 -> remote_telemedicine_consultation
     7 -> hold_and_monitor (do nothing)
 
-    Observation space (Box(6,)):
+    Observation space (Box(3,)):
     [0] maternal_risk_index        in [0,1]
     [1] neonatal_risk_index        in [0,1]
-    [2] referral_backlog           in [0,1]
-    [3] medical_supply_stress      in [0,1]
-    [4] community_trust            in [0,1]
-    [5] budget_remaining_norm      in [0,1]
+    [2] budget_remaining_norm      in [0,1]
     """
 
     metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 10}
@@ -74,11 +71,11 @@ class MaternalChildHealthMissionEnv(gym.Env):
 
         self.action_space = spaces.Discrete(len(self.ACTIONS))
 
-        # Core 6-feature observation space
+        # Minimal 3-feature observation space
         self.observation_space = spaces.Box(
-            low=np.zeros(6, dtype=np.float32),
-            high=np.ones(6, dtype=np.float32),
-            shape=(6,),
+            low=np.zeros(3, dtype=np.float32),
+            high=np.ones(3, dtype=np.float32),
+            shape=(3,),
             dtype=np.float32,
         )
 
@@ -94,8 +91,8 @@ class MaternalChildHealthMissionEnv(gym.Env):
         self.reward_history: list[float] = []
 
     def _observe(self) -> np.ndarray:
-        # Return core 6-feature observation: maternal risk, neonatal risk, referral backlog, supply stress, community trust, budget remaining
-        return self.state[[0, 1, 4, 5, 6, 9]].astype(np.float32)
+        # Return minimal 3-feature observation: maternal risk, neonatal risk, budget remaining
+        return self.state[[0, 1, 9]].astype(np.float32)
 
     def set_render_fps(self, fps: int) -> None:
         self.render_fps = max(1, int(fps))
