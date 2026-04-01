@@ -18,7 +18,11 @@ class MaternalChildHealthRenderer:
         self.clock = pygame.time.Clock()
 
         self.bg = (16, 22, 33)
+        self.bg_top = (20, 30, 48)
+        self.bg_bottom = (10, 16, 28)
+        self.shadow = (8, 12, 20)
         self.panel = (29, 37, 53)
+        self.panel_alt = (24, 33, 49)
         self.text = (236, 240, 245)
         self.good = (56, 176, 111)
         self.warn = (230, 168, 52)
@@ -56,6 +60,19 @@ class MaternalChildHealthRenderer:
             return self.warn
         return self.bad
 
+    def _draw_gradient_background(self, canvas: pygame.Surface) -> None:
+        for y in range(self.height):
+            t = y / max(1, self.height - 1)
+            r = int(self.bg_top[0] * (1.0 - t) + self.bg_bottom[0] * t)
+            g = int(self.bg_top[1] * (1.0 - t) + self.bg_bottom[1] * t)
+            b = int(self.bg_top[2] * (1.0 - t) + self.bg_bottom[2] * t)
+            pygame.draw.line(canvas, (r, g, b), (0, y), (self.width, y))
+
+    def _draw_card(self, canvas: pygame.Surface, rect: pygame.Rect, color: tuple[int, int, int]) -> None:
+        shadow_rect = rect.move(3, 4)
+        pygame.draw.rect(canvas, self.shadow, shadow_rect, border_radius=14)
+        pygame.draw.rect(canvas, color, rect, border_radius=14)
+
     def _draw_header(
         self,
         canvas: pygame.Surface,
@@ -85,7 +102,7 @@ class MaternalChildHealthRenderer:
 
     def _draw_trend_panel(self, canvas: pygame.Surface, risk_trend: list[float], reward_trend: list[float]):
         panel = pygame.Rect(24, 630, 1051, 55)
-        pygame.draw.rect(canvas, self.panel, panel, border_radius=12)
+        self._draw_card(canvas, panel, self.panel_alt)
 
         label = self.font_small.render("Mission trend (recent 60 steps): risk burden + reward", True, self.text)
         canvas.blit(label, (36, 637))
@@ -94,7 +111,7 @@ class MaternalChildHealthRenderer:
             return
 
         plot_rect = pygame.Rect(330, 638, 730, 40)
-        pygame.draw.rect(canvas, (20, 27, 40), plot_rect, border_radius=8)
+        pygame.draw.rect(canvas, (18, 25, 39), plot_rect, border_radius=8)
 
         def _norm(vals: list[float]) -> list[float]:
             if not vals:
@@ -126,7 +143,7 @@ class MaternalChildHealthRenderer:
 
     def _draw_status_bars(self, canvas: pygame.Surface, state: np.ndarray):
         panel = pygame.Rect(24, 95, 530, 575)
-        pygame.draw.rect(canvas, self.panel, panel, border_radius=12)
+        self._draw_card(canvas, panel, self.panel)
 
         x0 = 44
         y0 = 120
@@ -151,7 +168,7 @@ class MaternalChildHealthRenderer:
 
     def _draw_mission_map(self, canvas: pygame.Surface, state: np.ndarray):
         panel = pygame.Rect(575, 95, 500, 575)
-        pygame.draw.rect(canvas, self.panel, panel, border_radius=12)
+        self._draw_card(canvas, panel, self.panel)
 
         map_rect = pygame.Rect(600, 125, 450, 430)
         pygame.draw.rect(canvas, (20, 27, 40), map_rect, border_radius=12)
@@ -180,7 +197,8 @@ class MaternalChildHealthRenderer:
         ]
 
         for zone, label in zip(zones, zone_labels):
-            zone_intensity = min(1.0, 0.4 * risk + 0.35 * supply_stress + 0.25 * fatigue + np.random.uniform(-0.05, 0.05))
+            zone_offset = (zone.x % 17) / 100.0
+            zone_intensity = min(1.0, max(0.0, 0.4 * risk + 0.35 * supply_stress + 0.25 * fatigue + zone_offset - 0.08))
             color = self._bar_color(zone_intensity)
             pygame.draw.rect(canvas, color, zone, border_radius=10)
 
@@ -218,7 +236,7 @@ class MaternalChildHealthRenderer:
 
         state_arr = np.array(list(state), dtype=np.float32)
         canvas = pygame.Surface((self.width, self.height))
-        canvas.fill(self.bg)
+        self._draw_gradient_background(canvas)
 
         self._draw_header(canvas, day, max_days, total_reward, last_action=last_action, last_reward=last_reward)
         self._draw_status_bars(canvas, state_arr)

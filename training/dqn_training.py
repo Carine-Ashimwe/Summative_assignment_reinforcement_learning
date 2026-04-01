@@ -15,20 +15,20 @@ from stable_baselines3.common.vec_env import DummyVecEnv, VecMonitor
 from environment.custom_env import MaternalChildHealthMissionEnv, MissionConfig
 
 
-def build_env_with_mode(seed: int = 7, focused_mnh_mode: bool = False) -> gym.Env:
+def build_env_with_mode(seed: int = 7) -> gym.Env:
     env = MaternalChildHealthMissionEnv(
-        config=MissionConfig(focused_mnh_mode=focused_mnh_mode),
+        config=MissionConfig(),
         render_mode=None,
         seed=seed,
     )
     return Monitor(env)
 
 
-def build_vec_env(seed: int = 7, focused_mnh_mode: bool = False) -> VecMonitor:
+def build_vec_env(seed: int = 7) -> VecMonitor:
     env = DummyVecEnv(
         [
             lambda: MaternalChildHealthMissionEnv(
-                config=MissionConfig(focused_mnh_mode=focused_mnh_mode),
+                config=MissionConfig(),
                 render_mode=None,
                 seed=seed,
             )
@@ -94,8 +94,8 @@ def default_sweep() -> List[Dict]:
     ]
 
 
-def train_one(run_id: str, params: Dict, timesteps: int, seed: int, focused: bool = False, eval_episodes: int = 5) -> Dict:
-    vec_env = build_vec_env(seed=seed, focused_mnh_mode=focused)
+def train_one(run_id: str, params: Dict, timesteps: int, seed: int, eval_episodes: int = 5) -> Dict:
+    vec_env = build_vec_env(seed=seed)
     model = DQN(
         "MlpPolicy",
         vec_env,
@@ -118,13 +118,12 @@ def train_one(run_id: str, params: Dict, timesteps: int, seed: int, focused: boo
     ensure_dir(model_path.parent)
     model.save(model_path)
 
-    eval_env = build_env_with_mode(seed=seed + 100, focused_mnh_mode=focused)
+    eval_env = build_env_with_mode(seed=seed + 100)
     metrics = evaluate_policy_simple(model, eval_env, episodes=eval_episodes)
 
     payload = {
         "run_id": run_id,
         "algorithm": "DQN",
-        "focused_mnh_mode": focused,
         "timesteps": timesteps,
         "eval_episodes": eval_episodes,
         **params,
@@ -150,7 +149,7 @@ def append_csv(path: Path, rows: List[Dict]) -> None:
         writer.writerows(rows)
 
 
-def run_sweep(timesteps: int, seed: int, focused: bool = False, max_runs: int = 10, eval_episodes: int = 5) -> None:
+def run_sweep(timesteps: int, seed: int, max_runs: int = 10, eval_episodes: int = 5) -> None:
     rows = []
     for idx, params in enumerate(default_sweep()[:max_runs], start=1):
         run_id = f"dqn_run_{idx:02d}"
@@ -159,7 +158,6 @@ def run_sweep(timesteps: int, seed: int, focused: bool = False, max_runs: int = 
             params=params,
             timesteps=timesteps,
             seed=seed + idx,
-            focused=focused,
             eval_episodes=eval_episodes,
         )
         rows.append(row)
@@ -172,7 +170,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--seed", type=int, default=7)
     parser.add_argument("--sweep", action="store_true", help="Run all 10 hyperparameter experiments")
     parser.add_argument("--run-id", type=str, default="dqn_manual")
-    parser.add_argument("--focused", action="store_true", help="Use focused maternal-neonatal (6-feature) observation mode")
     parser.add_argument("--max-runs", type=int, default=10, help="Number of configs to run during sweep")
     parser.add_argument("--eval-episodes", type=int, default=5)
     parser.add_argument("--quick", action="store_true", help="Fast debug mode: fewer timesteps and fewer sweep runs")
@@ -194,7 +191,6 @@ def main() -> None:
         run_sweep(
             timesteps=timesteps,
             seed=args.seed,
-            focused=args.focused,
             max_runs=max_runs,
             eval_episodes=eval_episodes,
         )
@@ -206,7 +202,6 @@ def main() -> None:
         params=params,
         timesteps=timesteps,
         seed=args.seed,
-        focused=args.focused,
         eval_episodes=eval_episodes,
     )
     append_csv(Path("results") / "dqn_experiments.csv", [payload])
