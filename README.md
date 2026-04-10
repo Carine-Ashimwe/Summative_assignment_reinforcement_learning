@@ -2,7 +2,7 @@
 
 Custom reinforcement learning project for maternal-child health mission planning.
 
-## Environment (Required Design)
+## Environment
 
 - **Action space:** `Discrete(8)` mission interventions
 - **Observation space:** `Box(3,)` = maternal risk, neonatal risk, budget signal
@@ -46,12 +46,7 @@ python -m training.pg_training --algo ppo --sweep --max-runs 10 --timesteps 2000
 python -m training.pg_training --algo reinforce --sweep --max-runs 10 --timesteps 20000 --eval-episodes 2
 ```
 
-Outputs:
-- [results/dqn_experiments.csv](results/dqn_experiments.csv)
-- [results/ppo_experiments.csv](results/ppo_experiments.csv)
-- [results/reinforce_experiments.csv](results/reinforce_experiments.csv)
-
-## Static Random-Action Demo (Required)
+## Static Random-Action Demo 
 
 ```bash
 python main.py --random-demo --steps 180 --fps 8
@@ -85,7 +80,7 @@ Run with GUI + verbose terminal:
 python main.py --algo ppo --model models/pg/ppo_run_02.zip --episodes 1 --fps 2 --step-delay 0.2
 ```
 
-## Required Repository Structure
+## Repository Structure
 
 ```text
 project_root/
